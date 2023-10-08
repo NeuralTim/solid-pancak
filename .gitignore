@@ -1,32 +1,76 @@
-# Prerequisites
-*.d
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+'''
+categories = ("Dad", "Mum")
 
-# Precompiled Headers
-*.gch
-*.pch
+model = tf.keras.Sequential([
+    tf.keras.layers.Input((300, 300, 1)),
+    tf.keras.layers.Conv2D(100, 3, padding='same', activation=tf.nn.relu),
+    tf.keras.layers.Conv2D(200, 3, padding='same', activation=tf.nn.relu),
+    tf.keras.layers.MaxPooling2D(),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(2, activation=tf.nn.softmax)
+])
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+ds_train = tf.keras.preprocessing.image_dataset_from_directory(
+    directory="/Users/dom/OneDrive/Pulpit/MyPython/dataset mum and dad recognition",
+    labels='inferred',
+    label_mode='int',
+    #class_names=categories,
+    color_mode='grayscale',
+    batch_size=2,
+    image_size=(300, 300),
+    shuffle=True,
+    seed=123,
+    validation_split=0.2,
+    subset='training',
+)
 
-# Fortran module files
-*.mod
-*.smod
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+ds_validation = tf.keras.preprocessing.image_dataset_from_directory(
+    directory="/Users/dom/OneDrive/Pulpit/MyPython/dataset mum and dad recognition",
+    labels='inferred',
+    label_mode='int',
+    #class_names=categories,
+    color_mode='grayscale',
+    batch_size=2,
+    image_size=(300, 300),
+    shuffle=True,
+    seed=123,
+    validation_split=0.2,
+    subset='validation',
+)
 
-# Executables
-*.exe
-*.out
-*.app
+def augument(x, y):
+    image = tf.image.random_brightness(x, max_delta=0.05)
+    return image, y
+
+ds_train = ds_train.map(augument)
+
+model.compile(optimizer=tf.keras.optimizers.Adam(),
+              loss=[
+    tf.keras.losses.SparseCategoricalCrossentropy()
+    ],
+    metrics=['accuracy']
+    )
+
+model.fit(ds_train, verbose=2, epochs=10)
+
+model.save('mum/dad.model')'''
+
+model = tf.keras.models.load_model('mum/dad.model')
+
+for x in range(5):
+    img = cv2.imread(f'{x}.jpg')[:,:,0]
+    new_img = cv2.resize(img, (300, 300))
+    plt.imshow(new_img, cmap=plt.cm.binary)
+    plt.show()
+    new_img = np.invert(np.array([new_img]))
+    prediction = model.predict(new_img)
+    if np.argmax(prediction) == 0:
+        print('Prediction is: Dad')
+    else:
+        print('Prediction is: Mum')
